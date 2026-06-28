@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:cross_file/cross_file.dart';
 import '../../core/utils/image_utils.dart';
 
 /// 跨平台拍照组件 (Web/Android/iOS)
