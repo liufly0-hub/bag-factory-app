@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cross_file/cross_file.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/constants/constants.dart';
 import '../../core/config/theme.dart';
 import '../../core/utils/image_utils.dart';
 import '../../models/production_record_model.dart';
 import '../../repositories/production_repository.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/photo_capture_widget.dart';
 
 class ProductionReportScreen extends ConsumerStatefulWidget {
   const ProductionReportScreen({super.key});
@@ -170,11 +171,6 @@ class _ProductionReportScreenState
       onImageChanged: (f) => setState(() => _photoFile = f),
       size: 200,
     );
-  }
-
-  Future<void> _pickPhoto() async {
-    final file = await ImageUtils.takePhoto();
-    if (file != null) setState(() => _photoFile = file);
   }
 
   Future<void> _submit() async {
