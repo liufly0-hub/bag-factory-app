@@ -1,10 +1,12 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'dart:io';
+import 'package:cross_file/cross_file.dart';
 import '../../core/utils/image_utils.dart';
 
-class PhotoCaptureWidget extends StatelessWidget {
-  final File? imageFile;
-  final ValueChanged<File?> onImageChanged;
+/// 跨平台拍照组件 (Web/Android/iOS)
+class PhotoCaptureWidget extends StatefulWidget {
+  final XFile? imageFile;
+  final ValueChanged<XFile?> onImageChanged;
   final double size;
 
   const PhotoCaptureWidget({
@@ -15,33 +17,64 @@ class PhotoCaptureWidget extends StatelessWidget {
   });
 
   @override
+  State<PhotoCaptureWidget> createState() => _PhotoCaptureWidgetState();
+}
+
+class _PhotoCaptureWidgetState extends State<PhotoCaptureWidget> {
+  Uint8List? _imageBytes;
+
+  @override
+  void didUpdateWidget(PhotoCaptureWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.imageFile != oldWidget.imageFile) {
+      _loadBytes();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.imageFile != null) _loadBytes();
+  }
+
+  Future<void> _loadBytes() async {
+    if (widget.imageFile == null) {
+      setState(() => _imageBytes = null);
+      return;
+    }
+    final bytes = await widget.imageFile!.readAsBytes();
+    if (mounted) setState(() => _imageBytes = bytes);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => _showPicker(context),
       child: Container(
-        width: size,
-        height: size,
+        width: widget.size,
+        height: widget.size,
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.grey.shade300),
-          image: imageFile != null
+          image: _imageBytes != null
               ? DecorationImage(
-                  image: FileImage(imageFile!),
+                  image: MemoryImage(_imageBytes!),
                   fit: BoxFit.cover,
                 )
               : null,
         ),
-        child: imageFile == null
-            ? const Column(
+        child: _imageBytes == null
+            ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.camera_alt,
+                  const Icon(Icons.camera_alt,
                       size: 40, color: Colors.grey),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text('拍照上传',
                       style: TextStyle(
-                          fontSize: 14, color: Colors.grey)),
+                          fontSize: 14,
+                          color: Colors.grey.shade600)),
                 ],
               )
             : Stack(
@@ -50,7 +83,7 @@ class PhotoCaptureWidget extends StatelessWidget {
                     top: 4,
                     right: 4,
                     child: GestureDetector(
-                      onTap: () => onImageChanged(null),
+                      onTap: () => widget.onImageChanged(null),
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
@@ -59,23 +92,6 @@ class PhotoCaptureWidget extends StatelessWidget {
                         ),
                         child: const Icon(Icons.close,
                             size: 18, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 4,
-                    right: 4,
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '${(imageFile!.lengthSync() / 1024).toStringAsFixed(0)}KB',
-                        style: const TextStyle(
-                            fontSize: 11, color: Colors.white),
                       ),
                     ),
                   ),
@@ -98,7 +114,7 @@ class PhotoCaptureWidget extends StatelessWidget {
               onTap: () async {
                 Navigator.pop(context);
                 final file = await ImageUtils.takePhoto();
-                if (file != null) onImageChanged(file);
+                if (file != null) widget.onImageChanged(file);
               },
             ),
             ListTile(
@@ -107,7 +123,7 @@ class PhotoCaptureWidget extends StatelessWidget {
               onTap: () async {
                 Navigator.pop(context);
                 final file = await ImageUtils.pickFromGallery();
-                if (file != null) onImageChanged(file);
+                if (file != null) widget.onImageChanged(file);
               },
             ),
           ],
