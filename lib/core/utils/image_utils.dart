@@ -1,25 +1,29 @@
-import 'package:cross_file/cross_file.dart';
+import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
 class ImageUtils {
   static final ImagePicker _picker = ImagePicker();
 
-  /// 拍照（跨平台）
-  static Future<XFile?> takePhoto() async {
-    return await _picker.pickImage(
+  /// 拍照
+  static Future<File?> takePhoto() async {
+    final xFile = await _picker.pickImage(
       source: ImageSource.camera,
       imageQuality: 70,
       maxWidth: 1920,
     );
+    if (xFile == null) return null;
+    return File(xFile.path);
   }
 
-  /// 从相册选择（跨平台）
-  static Future<XFile?> pickFromGallery() async {
-    return await _picker.pickImage(
+  /// 从相册选择
+  static Future<File?> pickFromGallery() async {
+    final xFile = await _picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 70,
       maxWidth: 1920,
     );
+    if (xFile == null) return null;
+    return File(xFile.path);
   }
 
   /// 生产记录图片名 (后续接入Supabase后开启上传)

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../core/constants/constants.dart';
 import '../../core/config/theme.dart';
 import '../../core/utils/image_utils.dart';
 import '../../models/production_record_model.dart';
 import '../../repositories/production_repository.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/photo_capture_widget.dart';
 
 class ProductionReportScreen extends ConsumerStatefulWidget {
   const ProductionReportScreen({super.key});
@@ -22,7 +21,7 @@ class _ProductionReportScreenState
   String _selectedProduct = ProductTypes.all.first;
   final _qtyCtrl = TextEditingController();
   final _defectCtrl = TextEditingController();
-  XFile? _photoFile;
+  File? _photoFile;
   bool _isSubmitting = false;
 
   @override
@@ -166,11 +165,62 @@ class _ProductionReportScreenState
   }
 
   Widget _buildPhotoWidget() {
-    return PhotoCaptureWidget(
-      imageFile: _photoFile,
-      onImageChanged: (f) => setState(() => _photoFile = f),
-      size: 200,
+    return GestureDetector(
+      onTap: () => _pickPhoto(),
+      child: Container(
+        width: 200,
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade300),
+          image: _photoFile != null
+              ? DecorationImage(
+                  image: FileImage(_photoFile!),
+                  fit: BoxFit.cover,
+                )
+              : null,
+        ),
+        child: _photoFile == null
+            ? const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.camera_alt,
+                      size: 48, color: Colors.grey),
+                  SizedBox(height: 8),
+                  Text('点击拍照',
+                      style:
+                          TextStyle(fontSize: 16, color: Colors.grey)),
+                ],
+              )
+            : Stack(
+                children: [
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () =>
+                          setState(() => _photoFile = null),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close,
+                            size: 20, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+      ),
     );
+  }
+
+  Future<void> _pickPhoto() async {
+    final file = await ImageUtils.takePhoto();
+    if (file != null) setState(() => _photoFile = file);
   }
 
   Future<void> _submit() async {
